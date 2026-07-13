@@ -110,6 +110,12 @@
   .result-title { font-size: 12.5px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
 
   .hint { margin-top: 20px; font-size: 11.5px; color: #6b7280; }
+
+  #btn:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
 </style>
 </head>
 <body>
@@ -120,13 +126,30 @@
       </div>
       <h1>Abertura de Chamado por Voz</h1>
       <div class="subtitle">PoC &middot; segure o botão e fale o problema</div>
+      <div style="margin-top:20px;width:100%;">
+        <input
+          id="solicitante"
+          type="text"
+          placeholder="Nome Completo do solicitante"
+          autocomplete="off"
+          style="
+            width:100%;
+            padding:14px;
+            border-radius:12px;
+            border:1px solid #2c3342;
+            background:#0f1117;
+            color:#fff;
+            font-size:15px;
+            outline:none;
+          ">
+      </div>
     </div>
 
     <div class="stage">
       <div class="mic-wrap">
         <div class="ring r1" id="ring1"></div>
         <div class="ring r2" id="ring2"></div>
-        <button id="btn" aria-label="Segurar para gravar">
+        <button id="btn" aria-label="Segurar para gravar" disabled>
           <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
         </button>
       </div>
@@ -149,6 +172,12 @@
   const ENVIAR_URL = "https://connect-n8n.elian.com.br/webhook/chamado-voz/enviar";
 
   const btn = document.getElementById('btn');
+  const solicitante = document.getElementById('solicitante');
+
+  solicitante.addEventListener('input', () => {
+    btn.disabled = solicitante.value.trim() === '';
+  });
+
   const ring1 = document.getElementById('ring1');
   const ring2 = document.getElementById('ring2');
   const bars = document.getElementById('bars');
@@ -197,6 +226,12 @@
   }
 
   async function iniciarGravacao() {
+    if (!solicitante.value.trim()) {
+      solicitante.focus();
+      alert("Informe o nome do solicitante.");
+      return;
+    }
+
     resultEl.className = 'result';
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -244,6 +279,7 @@
     const blob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
     const ext = (mimeType || '').includes('mp4') ? 'm4a' : 'webm';
     const form = new FormData();
+    form.append("solicitante", solicitante.value.trim());
     form.append('audio', blob, 'chamado.' + ext);
 
     fetch(ENVIAR_URL, { method: 'POST', body: form })
