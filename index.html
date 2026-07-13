@@ -196,134 +196,74 @@
     resultBody.innerText = body;
   }
 
- async function iniciarGravacao() {
-  resultEl.className = 'result';
+  async function iniciarGravacao() {
+    resultEl.className = 'result';
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      statusEl.innerText = 'Permissão de microfone negada.';
+      showResult(false, 'Sem acesso ao microfone', err.message);
+      return;
+    }
 
-  console.clear();
-  console.log("========== DIAGNÓSTICO ==========");
-  console.log("URL:", location.href);
-  console.log("Origin:", location.origin);
-  console.log("Secure Context:", window.isSecureContext);
-  console.log("Protocol:", location.protocol);
-  console.log("MediaDevices:", navigator.mediaDevices);
-  console.log("getUserMedia:", navigator.mediaDevices?.getUserMedia);
-  console.log("UserAgent:", navigator.userAgent);
+    mimeType = pickMimeType();
+    audioChunks = [];
+    try {
+      mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    } catch (err) {
+      statusEl.innerText = 'Não foi possível iniciar a gravação.';
+      showResult(false, 'Erro ao gravar', err.message);
+      return;
+    }
 
-  if (!window.isSecureContext) {
-    statusEl.innerText = "Página não é um contexto seguro.";
-    showResult(
-      false,
-      "Contexto inseguro",
-      "window.isSecureContext = false"
-    );
-    return;
+    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = enviarAudio;
+    mediaRecorder.start();
+
+    setUI('recording');
+    statusEl.innerText = 'Gravando... solte para enviar';
   }
 
-  if (!navigator.mediaDevices) {
-    statusEl.innerText = "MediaDevices indisponível.";
-    showResult(
-      false,
-      "MediaDevices inexistente",
-      "navigator.mediaDevices é undefined."
-    );
-    return;
+  function pararGravacao() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+    }
+    setUI('sending');
+    statusEl.innerText = 'Enviando áudio...';
   }
 
-  if (!navigator.mediaDevices.getUserMedia) {
-    statusEl.innerText = "getUserMedia indisponível.";
-    showResult(
-      false,
-      "API indisponível",
-      "navigator.mediaDevices.getUserMedia não existe."
-    );
-    return;
+  function enviarAudio() {
+    if (!audioChunks.length) {
+      setUI('idle');
+      statusEl.innerText = 'Nada gravado. Toque e tente novamente.';
+      return;
+    }
+    const blob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
+    const ext = (mimeType || '').includes('mp4') ? 'm4a' : 'webm';
+    const form = new FormData();
+    form.append('audio', blob, 'chamado.' + ext);
+
+    fetch(ENVIAR_URL, { method: 'POST', body: form })
+      .then(res => res.json())
+      .then(data => {
+        setUI('idle');
+        statusEl.innerText = 'Toque e segure para gravar';
+        if (data && data.success) {
+          showResult(true, 'Chamado aberto', 'Nº ' + (data.ticketId || data.protocol || '(ver Movidesk)') +
+            (data.texto ? '\n\nTranscrição: ' + data.texto : ''));
+        } else {
+          showResult(false, 'Não foi possível abrir o chamado', (data && data.error) || 'Resposta inesperada do servidor.');
+        }
+      })
+      .catch(err => {
+        setUI('idle');
+        statusEl.innerText = 'Toque e segure para gravar';
+        showResult(false, 'Erro ao enviar', err.message);
+      });
   }
-
-  try {
-
-    const permissions = await navigator.permissions.query({ name: 'microphone' });
-    console.log("Permissão atual:", permissions.state);
-
-  } catch(e) {
-    console.log("Permissions API:", e);
-  }
-
-  try {
-
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      }
-    });
-
-    console.log("Microfone liberado.");
-
-  } catch (err) {
-
-    console.error("ERRO getUserMedia");
-    console.error(err);
-    console.error("name:", err.name);
-    console.error("message:", err.message);
-    console.error("stack:", err.stack);
-
-    statusEl.innerText = "Falha ao acessar o microfone.";
-
-    showResult(
-      false,
-      "Erro ao acessar microfone",
-`Nome: ${err.name}
-
-Mensagem:
-${err.message}
-
-SecureContext: ${window.isSecureContext}
-
-Origin:
-${location.origin}`
-    );
-
-    return;
-  }
-
-  mimeType = pickMimeType();
-  audioChunks = [];
-
-  try {
-
-    mediaRecorder = mimeType
-      ? new MediaRecorder(stream, { mimeType })
-      : new MediaRecorder(stream);
-
-  } catch (err) {
-
-    console.error("ERRO MediaRecorder");
-    console.error(err);
-
-    statusEl.innerText = "Erro ao iniciar gravação.";
-
-    showResult(
-      false,
-      "MediaRecorder",
-      `${err.name}\n${err.message}`
-    );
-
-    return;
-  }
-
-  mediaRecorder.ondataavailable = (e) => {
-    if (e.data.size > 0)
-      audioChunks.push(e.data);
-  };
-
-  mediaRecorder.onstop = enviarAudio;
-
-  mediaRecorder.start();
-
-  setUI("recording");
-  statusEl.innerText = "Gravando... solte para enviar";
-}
 
   btn.addEventListener('touchstart', (e) => { e.preventDefault(); iniciarGravacao(); }, { passive: false });
   btn.addEventListener('touchend',   (e) => { e.preventDefault(); pararGravacao(); }, { passive: false });
