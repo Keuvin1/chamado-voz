@@ -151,34 +151,27 @@
   }
   .result-header.err { color: #f87171; }
 
-  /* Pipeline Visual */
-  .pipeline-visual {
+  /* Checklist Elegante */
+  .checklist {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    margin: 14px 0;
-    padding: 10px;
+    gap: 8px;
+    margin: 12px 0 16px;
+    padding: 12px;
     background: #151821;
     border-radius: 10px;
-    border: 1px dashed #2c3342;
+    border: 1px solid var(--card-border);
   }
-  .pipeline-step {
-    font-size: 11px;
-    font-weight: 600;
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
     color: var(--text-dim);
-    background: #1d212c;
-    padding: 4px 10px;
-    border-radius: 6px;
-    text-align: center;
-    min-width: 160px;
   }
-  .pipeline-step.active { color: var(--green); border: 1px solid rgba(16,185,129,0.3); background: #111e1a; }
-  .pipeline-step.disabled { opacity: 0.4; text-decoration: line-through; }
-  .pipeline-arrow {
-    font-size: 10px;
-    color: #4b5563;
-  }
+  .checklist-item.done { color: var(--text); }
+  .checklist-item .icon { color: #374151; font-weight: bold; }
+  .checklist-item.done .icon { color: var(--green); }
 
   .report-grid {
     display: grid;
@@ -201,25 +194,11 @@
   }
 
   .hint {
-    margin-top: 16px;
+    margin-top: 18px;
     font-size: 11px;
     color: #4b5563;
-    line-height: 1.4;
+    line-height: 1.45;
   }
-
-  /* Rodapé Técnico */
-  .tech-footer {
-    margin-top: 20px;
-    padding-top: 12px;
-    border-top: 1px solid var(--card-border);
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    font-size: 10px;
-    color: #4b5563;
-    font-weight: 600;
-  }
-  .tech-tag { background: #1a1e29; padding: 2px 6px; border-radius: 4px; border: 1px solid #252a38; }
 
   #btn:disabled {
     opacity: .35;
@@ -281,7 +260,7 @@
       <button class="btn-action btn-retry" id="btnRetry">Gravar Novamente</button>
     </div>
 
-    <!-- Relatório com Pipeline Visual (Sem transcrição bruta) -->
+    <!-- Relatório Simplificado com Checklist -->
     <div class="result-container" id="resultContainer">
       <div class="result-header" id="resultHeader">
         <span>✔</span> Processamento Concluído
@@ -297,35 +276,30 @@
           <div class="report-value" id="repDuracao">-</div>
         </div>
         <div>
-          <div class="report-label">Tempo de IA</div>
+          <div class="report-label">Tempo de Processamento</div>
           <div class="report-value" id="repTempo">-</div>
         </div>
         <div>
           <div class="report-label">Status</div>
-          <div class="report-value" style="color: var(--green); font-weight: 600;">✓ Pipeline Concluído</div>
+          <div class="report-value" style="color: var(--green); font-weight: 600;">✓ Áudio Processado</div>
         </div>
       </div>
 
-      <!-- Pipeline Visual Flow -->
-      <div class="pipeline-visual">
-        <div class="pipeline-step active">Áudio Input (WebM)</div>
-        <div class="pipeline-arrow">▼</div>
-        <div class="pipeline-step active">Google Gemini 2.5 Flash</div>
-        <div class="pipeline-arrow">▼</div>
-        <div class="pipeline-step active">Estruturação de Dados (n8n)</div>
-        <div class="pipeline-arrow">▼</div>
-        <div class="pipeline-step disabled">Movidesk API</div>
+      <!-- Checklist Visual de Passos -->
+      <div class="checklist">
+        <div class="checklist-item done"><span class="icon">✓</span> Áudio recebido</div>
+        <div class="checklist-item done"><span class="icon">✓</span> Transcrição concluída</div>
+        <div class="checklist-item done"><span class="icon">✓</span> Informações estruturadas</div>
+        <div class="checklist-item done"><span class="icon">✓</span> Pronto para abertura do chamado</div>
+      </div>
+
+      <div class="report-label">Resumo</div>
+      <div class="report-value" style="font-size: 12.5px; color: var(--text-dim); margin-top: 4px;">
+        Seu áudio foi recebido e convertido em texto com sucesso. As informações já estão prontas para abertura automática do chamado.
       </div>
     </div>
 
-    <div class="hint">Esta é uma Prova de Conceito (PoC). O áudio é convertido em tempo real por Inteligência Artificial para estruturação automática das informações para abertura de chamado.</div>
-    
-    <!-- Rodapé Técnico de Engenharia -->
-    <div class="tech-footer">
-      <span class="tech-tag">HTML5 Audio</span>
-      <span class="tech-tag">Gemini 2.5 Flash</span>
-      <span class="tech-tag">n8n Workflow</span>
-    </div>
+    <div class="hint">Esta é uma Prova de Conceito (PoC). O áudio é convertido automaticamente em texto para agilizar a abertura de chamados.</div>
   </div>
 
 <script>
@@ -467,7 +441,7 @@
     confirmPanel.classList.remove('show');
     setUI('sending');
     
-    // 1. Início do Envio Real
+    // Monitor real baseado no status do fetch
     statusEl.innerText = "☁️ Enviando áudio ao servidor...";
     
     const tempoInicioIA = performance.now();
@@ -478,24 +452,21 @@
     form.append("solicitante", userVal);
     form.append('audio', recordedBlob, 'chamado.' + ext);
 
-    // Monitor de passos real baseado no tempo de resposta do fetch
     const requestPromise = fetch(ENVIAR_URL, {
       method: 'POST',
       body: form
     });
 
-    // Transição de status real assim que a requisição de rede é enviada
     setTimeout(() => {
       if (statusEl.innerText.includes("Enviando")) {
-        statusEl.innerText = "🤖 Processando transcrição (Gemini)...";
+        statusEl.innerText = "🤖 Processando transcrição...";
       }
     }, 700);
 
     requestPromise
       .then(res => {
-        if (!res.ok) throw new Error("Servidor retornou erro");
-        
-        statusEl.innerText = "🧠 Estruturando payload JSON...";
+        if (!res.ok) throw new Error("Erro no processamento");
+        statusEl.innerText = "🧠 Estruturando resultado...";
         return res.json();
       })
       .then(data => {
@@ -510,8 +481,8 @@
           resultHeader.className = "result-header";
           resultHeader.innerHTML = "<span>✔</span> Processamento Concluído";
           repSolicitante.innerText = userVal;
-          repDuracao.innerText = audioDuration + "s";
-          repTempo.innerText = tempoTotal + "s";
+          repDuracao.innerText = audioDuration + " segundos";
+          repTempo.innerText = tempoTotal + " segundos";
         } else {
           mostrarErroInterface();
         }
@@ -523,21 +494,18 @@
 
   function mostrarErroInterface() {
     setUI('idle');
-    statusEl.innerHTML = '<span style="color: #f87171;">⚠️ Não foi possível concluir a transcrição</span>';
+    statusEl.innerHTML = '<span style="color: #f87171;">⚠️ Não foi possível concluir a transcrição.</span>';
     confirmPanel.classList.remove('show');
     resultContainer.classList.remove('show');
     
-    // Recria e exibe o botão de tentar de novo limpo sem quebrar a tela
     confirmPanel.innerHTML = '<button class="btn-action btn-retry" id="btnRetryError" style="width:100%;">Gravar Novamente</button>';
     confirmPanel.classList.add('show');
     
     document.getElementById('btnRetryError').addEventListener('click', () => {
-      // Restaura botões padrão
       confirmPanel.innerHTML = `
         <button class="btn-action btn-send" id="btnSend">Enviar Áudio</button>
         <button class="btn-action btn-retry" id="btnRetry">Gravar Novamente</button>
       `;
-      // Reatribui eventos
       document.getElementById('btnSend').addEventListener('click', enviarAudioDoUsuario);
       document.getElementById('btnRetry').addEventListener('click', resetToRecordState);
       resetToRecordState();
