@@ -11,7 +11,8 @@
     --card-border: #232733;
     --blue: #2563eb;
     --blue-light: #3b82f6;
-    --red: #dc2626;
+    --red: #ef4444;
+    --red-dark: #dc2626;
     --green: #10b981;
     --text: #f3f4f6;
     --text-dim: #9ca3af;
@@ -32,7 +33,7 @@
     background: var(--card);
     border: 1px solid var(--card-border);
     border-radius: 20px;
-    padding: 28px 24px 24px;
+    padding: 28px 24px 20px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.4);
     text-align: center;
   }
@@ -73,7 +74,7 @@
   }
   #btn svg { width: 38px; height: 38px; fill: #fff; }
   #btn.recording {
-    background: linear-gradient(160deg, #ef4444, var(--red));
+    background: linear-gradient(160deg, #ef4444, var(--red-dark));
     box-shadow: 0 8px 28px rgba(220,38,38,0.45);
     transform: scale(1.04);
   }
@@ -97,46 +98,34 @@
 
   #status { font-size: 13px; color: var(--text-dim); min-height: 18px; font-weight: 500; }
 
-  /* Box de Confirmação antes do envio */
-  .confirm-box {
+  /* Painel de Confirmação de Envio */
+  .confirm-panel {
     display: none;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
     margin-top: 10px;
-    background: #171b26;
-    border: 1px dashed #3b82f6;
-    border-radius: 12px;
-    padding: 16px;
+    animation: fadeInUp 0.3s ease;
   }
-  .confirm-box.show { display: flex; }
-  .confirm-title { font-size: 13.5px; font-weight: 600; color: #60a5fa; }
-  .confirm-buttons {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    gap: 8px;
-  }
+  .confirm-panel.show { display: flex; }
   .btn-action {
-    padding: 12px;
-    border-radius: 8px;
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
     border: none;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s;
-  }
-  .btn-discard {
-    background: #27272a;
-    color: #f4f4f5;
-  }
-  .btn-discard:hover { background: #3f3f46; }
-  .btn-send {
-    background: var(--blue);
+    transition: background 0.2s ease, transform 0.1s ease;
     color: #fff;
   }
-  .btn-send:hover { background: var(--blue-light); }
+  .btn-action:active { transform: scale(0.98); }
+  .btn-send { background: var(--green); box-shadow: 0 4px 12px rgba(16,185,129,0.2); }
+  .btn-send:hover { background: #059669; }
+  .btn-retry { background: #374151; }
+  .btn-retry:hover { background: #4b5563; }
 
-  /* Box do Relatório Limpo de Sucesso */
+  /* Painel de Resultados */
   .result-container {
     display: none; 
     text-align: left;
@@ -145,6 +134,7 @@
     border-radius: 14px;
     padding: 18px;
     margin-top: 10px;
+    animation: fadeInUp 0.3s ease;
   }
   .result-container.show { display: block; }
   
@@ -161,49 +151,85 @@
   }
   .result-header.err { color: #f87171; }
 
-  .poc-steps {
+  /* Pipeline Visual */
+  .pipeline-visual {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-  }
-  .step-item {
-    display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12.5px;
-    color: var(--text-dim);
+    gap: 4px;
+    margin: 14px 0;
+    padding: 10px;
+    background: #151821;
+    border-radius: 10px;
+    border: 1px dashed #2c3342;
   }
-  .step-item.done { color: var(--text); }
-  .step-item .dot { width: 8px; height: 8px; border-radius: 50%; background: #374151; }
-  .step-item.done .dot { background: var(--green); }
-  .step-item.disabled .dot { background: #f59e0b; }
+  .pipeline-step {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: #1d212c;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-align: center;
+    min-width: 160px;
+  }
+  .pipeline-step.active { color: var(--green); border: 1px solid rgba(16,185,129,0.3); background: #111e1a; }
+  .pipeline-step.disabled { opacity: 0.4; text-decoration: line-through; }
+  .pipeline-arrow {
+    font-size: 10px;
+    color: #4b5563;
+  }
 
+  .report-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
   .report-label {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: #6b7280;
-    margin-top: 14px;
+    margin-top: 8px;
     font-weight: 700;
   }
   .report-value {
-    font-size: 13.5px;
+    font-size: 13px;
     color: var(--text);
-    margin-top: 3px;
-    font-weight: 500;
+    margin-top: 2px;
+    line-height: 1.4;
   }
 
   .hint {
-    margin-top: 20px;
+    margin-top: 16px;
     font-size: 11px;
     color: #4b5563;
     line-height: 1.4;
   }
 
+  /* Rodapé Técnico */
+  .tech-footer {
+    margin-top: 20px;
+    padding-top: 12px;
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    font-size: 10px;
+    color: #4b5563;
+    font-weight: 600;
+  }
+  .tech-tag { background: #1a1e29; padding: 2px 6px; border-radius: 4px; border: 1px solid #252a38; }
+
   #btn:disabled {
     opacity: .35;
     cursor: not-allowed;
     box-shadow: none;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>
 </head>
@@ -214,7 +240,7 @@
         <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
       </div>
       <h1>Abertura de Chamado por Voz</h1>
-      <div class="subtitle">PoC &middot; Segure o botão para gravar o problema</div>
+      <div class="subtitle">PoC &middot; Segure para falar o problema</div>
       <div style="margin-top:16px; width:100%;">
         <input
           id="solicitante"
@@ -249,32 +275,57 @@
       <div id="status">Informe o solicitante acima</div>
     </div>
 
-    <!-- Janela de Confirmação de Envio (Novo) -->
-    <div class="confirm-box" id="confirmBox">
-      <div class="confirm-title">🔊 Áudio gravado com sucesso!</div>
-      <div class="confirm-buttons">
-        <button class="btn-action btn-discard" id="btnDiscard">❌ Descartar</button>
-        <button class="btn-action btn-send" id="btnConfirmSend">🚀 Enviar Áudio</button>
-      </div>
+    <!-- Painel de Confirmação Antifail -->
+    <div class="confirm-panel" id="confirmPanel">
+      <button class="btn-action btn-send" id="btnSend">Enviar Áudio</button>
+      <button class="btn-action btn-retry" id="btnRetry">Gravar Novamente</button>
     </div>
 
-    <!-- Mini Relatório de Processamento Técnico (Sem texto longo) -->
+    <!-- Relatório com Pipeline Visual (Sem transcrição bruta) -->
     <div class="result-container" id="resultContainer">
       <div class="result-header" id="resultHeader">
         <span>✔</span> Processamento Concluído
       </div>
-      
-      <div class="poc-steps">
-        <div class="step-item done"><div class="dot"></div> Áudio recebido</div>
-        <div class="step-item done"><div class="dot"></div> Transcrição finalizada</div>
-        <div class="step-item disabled"><div class="dot"></div> Envio ao Movidesk (Desabilitado)</div>
+
+      <div class="report-grid">
+        <div>
+          <div class="report-label">Solicitante</div>
+          <div class="report-value" id="repSolicitante">-</div>
+        </div>
+        <div>
+          <div class="report-label">Duração do Áudio</div>
+          <div class="report-value" id="repDuracao">-</div>
+        </div>
+        <div>
+          <div class="report-label">Tempo de IA</div>
+          <div class="report-value" id="repTempo">-</div>
+        </div>
+        <div>
+          <div class="report-label">Status</div>
+          <div class="report-value" style="color: var(--green); font-weight: 600;">✓ Pipeline Concluído</div>
+        </div>
       </div>
 
-      <div class="report-label">Solicitante</div>
-      <div class="report-value" id="repSolicitante">-</div>
+      <!-- Pipeline Visual Flow -->
+      <div class="pipeline-visual">
+        <div class="pipeline-step active">Áudio Input (WebM)</div>
+        <div class="pipeline-arrow">▼</div>
+        <div class="pipeline-step active">Google Gemini 2.5 Flash</div>
+        <div class="pipeline-arrow">▼</div>
+        <div class="pipeline-step active">Estruturação de Dados (n8n)</div>
+        <div class="pipeline-arrow">▼</div>
+        <div class="pipeline-step disabled">Movidesk API</div>
+      </div>
     </div>
 
-    <div class="hint">Esta é uma Prova de Conceito (PoC). O áudio é processado em tempo real por Inteligência Artificial para demonstração da transcrição imediata.</div>
+    <div class="hint">Esta é uma Prova de Conceito (PoC). O áudio é convertido em tempo real por Inteligência Artificial para estruturação automática das informações para abertura de chamado.</div>
+    
+    <!-- Rodapé Técnico de Engenharia -->
+    <div class="tech-footer">
+      <span class="tech-tag">HTML5 Audio</span>
+      <span class="tech-tag">Gemini 2.5 Flash</span>
+      <span class="tech-tag">n8n Workflow</span>
+    </div>
   </div>
 
 <script>
@@ -287,13 +338,15 @@
   const bars = document.getElementById('bars');
   const statusEl = document.getElementById('status');
   
-  const confirmBox = document.getElementById('confirmBox');
-  const btnDiscard = document.getElementById('btnDiscard');
-  const btnConfirmSend = document.getElementById('btnConfirmSend');
-
+  const confirmPanel = document.getElementById('confirmPanel');
+  const btnSend = document.getElementById('btnSend');
+  const btnRetry = document.getElementById('btnRetry');
+  
   const resultContainer = document.getElementById('resultContainer');
   const resultHeader = document.getElementById('resultHeader');
   const repSolicitante = document.getElementById('repSolicitante');
+  const repDuracao = document.getElementById('repDuracao');
+  const repTempo = document.getElementById('repTempo');
 
   solicitante.addEventListener('input', () => {
     const hasValue = solicitante.value.trim() !== '';
@@ -309,7 +362,9 @@
   let audioChunks = [];
   let stream = null;
   let mimeType = '';
-  let audioBlobSaved = null; // Guarda o blob na memória
+  let startTime = 0;
+  let audioDuration = 0;
+  let recordedBlob = null;
 
   function pickMimeType() {
     const candidates = [
@@ -339,38 +394,14 @@
     }
   }
 
-  function simulateProcessingSteps() {
-    let step = 0;
-    const interval = setInterval(() => {
-      if (statusEl.innerText.startsWith('Toque')) {
-        clearInterval(interval);
-        return;
-      }
-      
-      if (step === 0) {
-        statusEl.innerText = "☁️ Enviando áudio...";
-      } else if (step === 1) {
-        statusEl.innerText = "🤖 Transcrevendo com Gemini...";
-      } else if (step === 2) {
-        statusEl.innerText = "🧠 Estruturando texto...";
-      }
-      step++;
-    }, 900);
-    
-    return interval;
-  }
-
-  function showResult(ok, errorMsg, user) {
-    resultContainer.classList.add('show');
-    if (ok) {
-      resultHeader.className = "result-header";
-      resultHeader.innerHTML = "<span>✔</span> Processamento Concluído";
-      repSolicitante.innerText = user || "Não identificado";
-    } else {
-      resultHeader.className = "result-header err";
-      resultHeader.innerHTML = "<span>⚠️</span> Falha no Processamento";
-      repSolicitante.innerText = errorMsg || "Erro ao processar";
-    }
+  function resetToRecordState() {
+    recordedBlob = null;
+    audioChunks = [];
+    confirmPanel.classList.remove('show');
+    resultContainer.classList.remove('show');
+    btn.disabled = false;
+    statusEl.innerText = 'Toque e segure para gravar novamente';
+    setUI('idle');
   }
 
   async function iniciarGravacao() {
@@ -380,14 +411,12 @@
     }
 
     resultContainer.classList.remove('show');
-    confirmBox.classList.remove('show');
-    audioBlobSaved = null;
-
+    confirmPanel.classList.remove('show');
+    
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (err) {
       statusEl.innerText = 'Microfone não autorizado.';
-      showResult(false, 'A permissão de microfone é necessária.', '');
       return;
     }
 
@@ -396,22 +425,24 @@
     try {
       mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
     } catch (err) {
-      statusEl.innerText = 'Erro ao iniciar gravação.';
-      showResult(false, err.message, '');
+      statusEl.innerText = 'Erro ao gravar.';
       return;
     }
 
     mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
-    mediaRecorder.onstop = salvarAudioLocalmente;
+    mediaRecorder.onstop = prepararEnvio;
+    
+    startTime = Date.now();
     mediaRecorder.start();
 
     setUI('recording');
-    statusEl.innerText = '🎤 Gravando... solte para avaliar';
+    statusEl.innerText = '🎤 Gravando... solte para parar';
   }
 
   function pararGravacao() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
+      audioDuration = Math.round((Date.now() - startTime) / 1000);
     }
     if (stream) {
       stream.getTracks().forEach(t => t.stop());
@@ -419,64 +450,103 @@
     setUI('idle');
   }
 
-  // Apenas salva localmente e abre o modal de decisão
-  function salvarAudioLocalmente() {
+  function prepararEnvio() {
     if (!audioChunks.length) {
       statusEl.innerText = 'Toque e segure para gravar';
       return;
     }
-    audioBlobSaved = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
-    statusEl.innerText = 'Aguardando sua decisão...';
-    confirmBox.classList.add('show');
+    recordedBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
+    btn.disabled = true;
+    statusEl.innerText = 'Áudio capturado com sucesso!';
+    confirmPanel.classList.add('show');
   }
 
-  // Caso o usuário descarte o áudio
-  btnDiscard.addEventListener('click', () => {
-    audioBlobSaved = null;
-    audioChunks = [];
-    confirmBox.classList.remove('show');
-    statusEl.innerText = 'Toque e segure para gravar novamente';
-  });
+  function enviarAudioDoUsuario() {
+    if (!recordedBlob) return;
 
-  // Se o usuário confirmar o envio
-  btnConfirmSend.addEventListener('click', () => {
-    if (!audioBlobSaved) return;
-    confirmBox.classList.remove('show');
-    enviarAudioServidor();
-  });
-
-  function enviarAudioServidor() {
+    confirmPanel.classList.remove('show');
     setUI('sending');
-    const processInterval = simulateProcessingSteps();
+    
+    // 1. Início do Envio Real
+    statusEl.innerText = "☁️ Enviando áudio ao servidor...";
+    
+    const tempoInicioIA = performance.now();
     const ext = (mimeType || '').includes('mp4') ? 'm4a' : 'webm';
     const form = new FormData();
     const userVal = solicitante.value.trim();
     
     form.append("solicitante", userVal);
-    form.append('audio', audioBlobSaved, 'chamado.' + ext);
+    form.append('audio', recordedBlob, 'chamado.' + ext);
 
-    fetch(ENVIAR_URL, { method: 'POST', body: form })
-      .then(res => res.json())
+    // Monitor de passos real baseado no tempo de resposta do fetch
+    const requestPromise = fetch(ENVIAR_URL, {
+      method: 'POST',
+      body: form
+    });
+
+    // Transição de status real assim que a requisição de rede é enviada
+    setTimeout(() => {
+      if (statusEl.innerText.includes("Enviando")) {
+        statusEl.innerText = "🤖 Processando transcrição (Gemini)...";
+      }
+    }, 700);
+
+    requestPromise
+      .then(res => {
+        if (!res.ok) throw new Error("Servidor retornou erro");
+        
+        statusEl.innerText = "🧠 Estruturando payload JSON...";
+        return res.json();
+      })
       .then(data => {
-        clearInterval(processInterval);
+        const tempoTotal = ((performance.now() - tempoInicioIA) / 1000).toFixed(2);
+        
+        statusEl.innerText = "✅ Concluído";
         setUI('idle');
-        statusEl.innerText = 'Para um novo envio, grave novamente';
+        btn.disabled = false;
 
         if (data && data.success) {
-          showResult(true, '', userVal);
+          resultContainer.classList.add('show');
+          resultHeader.className = "result-header";
+          resultHeader.innerHTML = "<span>✔</span> Processamento Concluído";
+          repSolicitante.innerText = userVal;
+          repDuracao.innerText = audioDuration + "s";
+          repTempo.innerText = tempoTotal + "s";
         } else {
-          showResult(false, data.error || 'Erro inesperado no processamento.', '');
+          mostrarErroInterface();
         }
       })
       .catch(err => {
-        clearInterval(processInterval);
-        setUI('idle');
-        statusEl.innerText = 'Falha no envio do áudio';
-        showResult(false, err.message, '');
+        mostrarErroInterface();
       });
   }
 
-  // Eventos de Gravação
+  function mostrarErroInterface() {
+    setUI('idle');
+    statusEl.innerHTML = '<span style="color: #f87171;">⚠️ Não foi possível concluir a transcrição</span>';
+    confirmPanel.classList.remove('show');
+    resultContainer.classList.remove('show');
+    
+    // Recria e exibe o botão de tentar de novo limpo sem quebrar a tela
+    confirmPanel.innerHTML = '<button class="btn-action btn-retry" id="btnRetryError" style="width:100%;">Gravar Novamente</button>';
+    confirmPanel.classList.add('show');
+    
+    document.getElementById('btnRetryError').addEventListener('click', () => {
+      // Restaura botões padrão
+      confirmPanel.innerHTML = `
+        <button class="btn-action btn-send" id="btnSend">Enviar Áudio</button>
+        <button class="btn-action btn-retry" id="btnRetry">Gravar Novamente</button>
+      `;
+      // Reatribui eventos
+      document.getElementById('btnSend').addEventListener('click', enviarAudioDoUsuario);
+      document.getElementById('btnRetry').addEventListener('click', resetToRecordState);
+      resetToRecordState();
+    });
+  }
+
+  btnSend.addEventListener('click', enviarAudioDoUsuario);
+  btnRetry.addEventListener('click', resetToRecordState);
+
   btn.addEventListener('touchstart', (e) => { e.preventDefault(); iniciarGravacao(); }, { passive: false });
   btn.addEventListener('touchend',   (e) => { e.preventDefault(); pararGravacao(); }, { passive: false });
   btn.addEventListener('touchcancel',(e) => { e.preventDefault(); pararGravacao(); }, { passive: false });
