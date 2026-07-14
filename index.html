@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Abertura de Chamado por Voz</title>
+<title>PoC - Assistente de Voz</title>
 <style>
   :root {
     --bg: #0b0d12;
@@ -12,7 +12,7 @@
     --blue: #2563eb;
     --blue-light: #3b82f6;
     --red: #dc2626;
-    --green: #16a34a;
+    --green: #10b981;
     --text: #f3f4f6;
     --text-dim: #9ca3af;
   }
@@ -32,11 +32,11 @@
     background: var(--card);
     border: 1px solid var(--card-border);
     border-radius: 20px;
-    padding: 32px 24px 28px;
+    padding: 28px 24px 24px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.4);
     text-align: center;
   }
-  .header { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 28px; }
+  .header { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 24px; }
   .logo {
     width: 44px; height: 44px; border-radius: 12px;
     background: linear-gradient(135deg, var(--blue), var(--blue-light));
@@ -45,11 +45,11 @@
   }
   .logo svg { width: 24px; height: 24px; fill: #fff; }
   h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.2px; }
-  .subtitle { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
+  .subtitle { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 
-  .stage { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; margin: 8px 0 24px; }
+  .stage { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; margin: 8px 0 20px; }
 
-  .mic-wrap { position: relative; width: 156px; height: 156px; display: flex; align-items: center; justify-content: center; }
+  .mic-wrap { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; }
   .ring {
     position: absolute; inset: 0; border-radius: 50%;
     border: 2px solid rgba(37,99,235,0.25);
@@ -64,24 +64,25 @@
 
   #btn {
     position: relative; z-index: 2;
-    width: 116px; height: 116px; border-radius: 50%; border: none;
+    width: 106px; height: 106px; border-radius: 50%; border: none;
     background: linear-gradient(160deg, var(--blue-light), var(--blue));
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 8px 24px rgba(37,99,235,0.35);
     transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
   }
-  #btn svg { width: 42px; height: 42px; fill: #fff; }
+  #btn svg { width: 38px; height: 38px; fill: #fff; }
   #btn.recording {
     background: linear-gradient(160deg, #ef4444, var(--red));
     box-shadow: 0 8px 28px rgba(220,38,38,0.45);
     transform: scale(1.04);
   }
-  #btn.sending { opacity: 0.65; }
+  #btn.sending { opacity: 0.5; cursor: not-allowed; }
 
-  .bars { display: flex; align-items: center; justify-content: center; gap: 3px; height: 22px; }
+  .bars { display: flex; align-items: center; justify-content: center; gap: 3px; height: 18px; }
   .bars span {
     display: block; width: 3px; border-radius: 2px; background: var(--blue-light);
-    height: 6px; opacity: 0.35; transition: height 0.15s ease, opacity 0.15s ease;
+    height: 6px; opacity: 0.2; transition: height 0.15s ease, opacity 0.15s ease;
   }
   .bars.active span { animation: barMove 0.9s ease-in-out infinite; opacity: 1; background: #f87171; }
   .bars span:nth-child(1) { animation-delay: 0s; }
@@ -91,30 +92,86 @@
   .bars span:nth-child(5) { animation-delay: 0.4s; }
   @keyframes barMove {
     0%, 100% { height: 6px; }
-    50% { height: 22px; }
+    50% { height: 18px; }
   }
 
-  #status { font-size: 13.5px; color: var(--text-dim); min-height: 18px; }
+  #status { font-size: 13px; color: var(--text-dim); min-height: 18px; font-weight: 500; }
 
-  .result {
-    margin-top: 6px; padding: 14px 16px; border-radius: 12px;
-    background: #0f1117; border: 1px solid var(--card-border);
-    font-size: 13px; color: var(--text-dim); text-align: left;
-    display: none; line-height: 1.5;
+  /* Estilização da área de resultado no formato Mini Relatório */
+  .result-container {
+    display: none; 
+    text-align: left;
+    background: #0f1117;
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-top: 10px;
   }
-  .result.show { display: block; }
-  .result.ok { border-color: rgba(22,163,74,0.4); }
-  .result.ok .result-title { color: var(--green); }
-  .result.err { border-color: rgba(220,38,38,0.4); }
-  .result.err .result-title { color: var(--red); }
-  .result-title { font-size: 12.5px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .result-container.show { display: block; }
+  
+  .result-header {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 8px;
+  }
+  .result-header.err { color: #f87171; }
 
-  .hint { margin-top: 20px; font-size: 11.5px; color: #6b7280; }
+  .poc-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+  .step-item.done { color: var(--text); }
+  .step-item .dot { width: 8px; height: 8px; border-radius: 50%; background: #374151; }
+  .step-item.done .dot { background: var(--green); }
+  .step-item.disabled .dot { background: #f59e0b; }
 
-  #btn:disabled{
-    opacity:.4;
-    cursor:not-allowed;
-    box-shadow:none;
+  .report-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    margin-top: 12px;
+    font-weight: 700;
+  }
+  .report-value {
+    font-size: 13px;
+    color: var(--text);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+  .report-value.quote {
+    font-style: italic;
+    border-left: 2px solid var(--blue);
+    padding-left: 8px;
+    color: #d1d5db;
+  }
+
+  .hint {
+    margin-top: 20px;
+    font-size: 11px;
+    color: #4b5563;
+    line-height: 1.4;
+  }
+
+  #btn:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    box-shadow: none;
   }
 </style>
 </head>
@@ -124,23 +181,24 @@
       <div class="logo">
         <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
       </div>
-      <h1>Abertura de Chamado por Voz</h1>
-      <div class="subtitle">PoC &middot; segure o botão e fale o problema</div>
-      <div style="margin-top:20px;width:100%;">
+      <h1>Assistente de Voz para Service Desk</h1>
+      <div class="subtitle">PoC &middot; Segure o botão e diga seu problema</div>
+      <div style="margin-top:16px; width:100%;">
         <input
           id="solicitante"
           type="text"
-          placeholder="Nome Completo do solicitante"
+          placeholder="Nome do Solicitante"
           autocomplete="off"
           style="
             width:100%;
-            padding:14px;
-            border-radius:12px;
+            padding:12px 14px;
+            border-radius:10px;
             border:1px solid #2c3342;
             background:#0f1117;
             color:#fff;
-            font-size:15px;
+            font-size:14px;
             outline:none;
+            text-align: center;
           ">
       </div>
     </div>
@@ -156,35 +214,57 @@
       <div class="bars" id="bars">
         <span></span><span></span><span></span><span></span><span></span>
       </div>
-      <div id="status">Toque e segure para gravar</div>
+      <div id="status">Informe o solicitante acima</div>
     </div>
 
-    <div class="result" id="result">
-      <div class="result-title" id="resultTitle"></div>
-      <div id="resultBody"></div>
+    <!-- Mini Relatório de Processamento -->
+    <div class="result-container" id="resultContainer">
+      <div class="result-header" id="resultHeader">
+        <span>✔</span> Processamento Concluído
+      </div>
+      
+      <!-- Pipeline visual -->
+      <div class="poc-steps">
+        <div class="step-item done"><div class="dot"></div> Áudio recebido</div>
+        <div class="step-item done"><div class="dot"></div> Transcrição processada</div>
+        <div class="step-item disabled"><div class="dot"></div> Envio ao Movidesk (Desabilitado)</div>
+      </div>
+
+      <div class="report-label">Solicitante</div>
+      <div class="report-value" id="repSolicitante">-</div>
+
+      <div class="report-label">Transcrição por IA</div>
+      <div class="report-value quote" id="repTranscricao">-</div>
     </div>
 
-    <div class="hint">O áudio é enviado direto para transcrição. Nenhum arquivo fica salvo no aparelho.</div>
+    <div class="hint">Esta é uma Prova de Conceito (PoC). O áudio é processado em tempo real por Inteligência Artificial para demonstração da transcrição imediata.</div>
   </div>
 
 <script>
-  // TODO: ajustar para a URL de producao do seu n8n
   const ENVIAR_URL = "https://connect-n8n.elian.com.br/webhook/chamado-voz/enviar";
 
   const btn = document.getElementById('btn');
   const solicitante = document.getElementById('solicitante');
-
-  solicitante.addEventListener('input', () => {
-    btn.disabled = solicitante.value.trim() === '';
-  });
-
   const ring1 = document.getElementById('ring1');
   const ring2 = document.getElementById('ring2');
   const bars = document.getElementById('bars');
   const statusEl = document.getElementById('status');
-  const resultEl = document.getElementById('result');
-  const resultTitle = document.getElementById('resultTitle');
-  const resultBody = document.getElementById('resultBody');
+  
+  const resultContainer = document.getElementById('resultContainer');
+  const resultHeader = document.getElementById('resultHeader');
+  const repSolicitante = document.getElementById('repSolicitante');
+  const repTranscricao = document.getElementById('repTranscricao');
+
+  // Ativa o botão apenas quando houver solicitante informado
+  solicitante.addEventListener('input', () => {
+    const hasValue = solicitante.value.trim() !== '';
+    btn.disabled = !hasValue;
+    if (hasValue && statusEl.innerText === 'Informe o solicitante acima') {
+      statusEl.innerText = 'Toque e segure para gravar';
+    } else if (!hasValue) {
+      statusEl.innerText = 'Informe o solicitante acima';
+    }
+  });
 
   let mediaRecorder = null;
   let audioChunks = [];
@@ -219,25 +299,55 @@
     }
   }
 
-  function showResult(ok, title, body) {
-    resultEl.className = 'result show ' + (ok ? 'ok' : 'err');
-    resultTitle.innerText = (ok ? '✅ ' : '⚠️ ') + title;
-    resultBody.innerText = body;
+  // Atualização dinâmica do loader/steps simulado
+  function simulateProcessingSteps() {
+    let step = 0;
+    const interval = setInterval(() => {
+      if (statusEl.innerText.startsWith('Toque')) {
+        clearInterval(interval);
+        return;
+      }
+      
+      if (step === 0) {
+        statusEl.innerText = "☁️ Enviando áudio...";
+      } else if (step === 1) {
+        statusEl.innerText = "🤖 Transcrevendo com Gemini...";
+      } else if (step === 2) {
+        statusEl.innerText = "🧠 Estruturando texto...";
+      }
+      step++;
+    }, 900);
+    
+    return interval;
+  }
+
+  function showResult(ok, text, user) {
+    resultContainer.classList.add('show');
+    if (ok) {
+      resultHeader.className = "result-header";
+      resultHeader.innerHTML = "<span>✔</span> Processamento Concluído";
+      repSolicitante.innerText = user || "Não identificado";
+      repTranscricao.innerText = `"${text}"`;
+    } else {
+      resultHeader.className = "result-header err";
+      resultHeader.innerHTML = "<span>⚠️</span> Falha no Processamento";
+      repSolicitante.innerText = "-";
+      repTranscricao.innerText = text;
+    }
   }
 
   async function iniciarGravacao() {
     if (!solicitante.value.trim()) {
       solicitante.focus();
-      alert("Informe o nome do solicitante.");
       return;
     }
 
-    resultEl.className = 'result';
+    resultContainer.classList.remove('show');
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (err) {
-      statusEl.innerText = 'Permissão de microfone negada.';
-      showResult(false, 'Sem acesso ao microfone', err.message);
+      statusEl.innerText = 'Microfone não autorizado.';
+      showResult(false, 'A permissão de microfone é necessária para esta demonstração.', '');
       return;
     }
 
@@ -246,8 +356,8 @@
     try {
       mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
     } catch (err) {
-      statusEl.innerText = 'Não foi possível iniciar a gravação.';
-      showResult(false, 'Erro ao gravar', err.message);
+      statusEl.innerText = 'Erro ao iniciar gravação.';
+      showResult(false, err.message, '');
       return;
     }
 
@@ -256,7 +366,7 @@
     mediaRecorder.start();
 
     setUI('recording');
-    statusEl.innerText = 'Gravando... solte para enviar';
+    statusEl.innerText = '🎤 Gravando... solte para processar';
   }
 
   function pararGravacao() {
@@ -267,40 +377,45 @@
       stream.getTracks().forEach(t => t.stop());
     }
     setUI('sending');
-    statusEl.innerText = 'Enviando áudio...';
   }
 
   function enviarAudio() {
     if (!audioChunks.length) {
       setUI('idle');
-      statusEl.innerText = 'Nada gravado. Toque e tente novamente.';
+      statusEl.innerText = 'Toque e segure para gravar';
       return;
     }
+    
+    const processInterval = simulateProcessingSteps();
     const blob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
     const ext = (mimeType || '').includes('mp4') ? 'm4a' : 'webm';
     const form = new FormData();
-    form.append("solicitante", solicitante.value.trim());
+    const userVal = solicitante.value.trim();
+    form.append("solicitante", userVal);
     form.append('audio', blob, 'chamado.' + ext);
 
     fetch(ENVIAR_URL, { method: 'POST', body: form })
       .then(res => res.json())
       .then(data => {
+        clearInterval(processInterval);
         setUI('idle');
-        statusEl.innerText = 'Toque e segure para gravar';
+        statusEl.innerText = 'Toque e segure para gravar novamente';
+
         if (data && data.success) {
-          showResult(true, 'Chamado aberto', 'Nº ' + (data.ticketId || data.protocol || '(ver Movidesk)') +
-            (data.texto ? '\n\nTranscrição: ' + data.texto : ''));
+          showResult(true, data.transcricao, userVal);
         } else {
-          showResult(false, 'Não foi possível abrir o chamado', (data && data.error) || 'Resposta inesperada do servidor.');
+          showResult(false, data.error || 'Erro inesperado no servidor.', '');
         }
       })
       .catch(err => {
+        clearInterval(processInterval);
         setUI('idle');
         statusEl.innerText = 'Toque e segure para gravar';
-        showResult(false, 'Erro ao enviar', err.message);
+        showResult(false, 'Erro na comunicação com o servidor: ' + err.message, '');
       });
   }
 
+  // Eventos para Mobile e Desktop
   btn.addEventListener('touchstart', (e) => { e.preventDefault(); iniciarGravacao(); }, { passive: false });
   btn.addEventListener('touchend',   (e) => { e.preventDefault(); pararGravacao(); }, { passive: false });
   btn.addEventListener('touchcancel',(e) => { e.preventDefault(); pararGravacao(); }, { passive: false });
