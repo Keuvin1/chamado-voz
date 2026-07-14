@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>PoC - Assistente de Voz</title>
+<title>Abertura de Chamado por Voz</title>
 <style>
   :root {
     --bg: #0b0d12;
@@ -97,7 +97,46 @@
 
   #status { font-size: 13px; color: var(--text-dim); min-height: 18px; font-weight: 500; }
 
-  /* Estilização da área de resultado no formato Mini Relatório */
+  /* Box de Confirmação antes do envio */
+  .confirm-box {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-top: 10px;
+    background: #171b26;
+    border: 1px dashed #3b82f6;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .confirm-box.show { display: flex; }
+  .confirm-title { font-size: 13.5px; font-weight: 600; color: #60a5fa; }
+  .confirm-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 8px;
+  }
+  .btn-action {
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-discard {
+    background: #27272a;
+    color: #f4f4f5;
+  }
+  .btn-discard:hover { background: #3f3f46; }
+  .btn-send {
+    background: var(--blue);
+    color: #fff;
+  }
+  .btn-send:hover { background: var(--blue-light); }
+
+  /* Box do Relatório Limpo de Sucesso */
   .result-container {
     display: none; 
     text-align: left;
@@ -126,7 +165,6 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-bottom: 16px;
   }
   .step-item {
     display: flex;
@@ -145,20 +183,14 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: #6b7280;
-    margin-top: 12px;
+    margin-top: 14px;
     font-weight: 700;
   }
   .report-value {
-    font-size: 13px;
+    font-size: 13.5px;
     color: var(--text);
     margin-top: 3px;
-    line-height: 1.4;
-  }
-  .report-value.quote {
-    font-style: italic;
-    border-left: 2px solid var(--blue);
-    padding-left: 8px;
-    color: #d1d5db;
+    font-weight: 500;
   }
 
   .hint {
@@ -181,8 +213,8 @@
       <div class="logo">
         <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
       </div>
-      <h1>Assistente de Voz para Service Desk</h1>
-      <div class="subtitle">PoC &middot; Segure o botão e diga seu problema</div>
+      <h1>Abertura de Chamado por Voz</h1>
+      <div class="subtitle">PoC &middot; Segure o botão para gravar o problema</div>
       <div style="margin-top:16px; width:100%;">
         <input
           id="solicitante"
@@ -217,24 +249,29 @@
       <div id="status">Informe o solicitante acima</div>
     </div>
 
-    <!-- Mini Relatório de Processamento -->
+    <!-- Janela de Confirmação de Envio (Novo) -->
+    <div class="confirm-box" id="confirmBox">
+      <div class="confirm-title">🔊 Áudio gravado com sucesso!</div>
+      <div class="confirm-buttons">
+        <button class="btn-action btn-discard" id="btnDiscard">❌ Descartar</button>
+        <button class="btn-action btn-send" id="btnConfirmSend">🚀 Enviar Áudio</button>
+      </div>
+    </div>
+
+    <!-- Mini Relatório de Processamento Técnico (Sem texto longo) -->
     <div class="result-container" id="resultContainer">
       <div class="result-header" id="resultHeader">
         <span>✔</span> Processamento Concluído
       </div>
       
-      <!-- Pipeline visual -->
       <div class="poc-steps">
         <div class="step-item done"><div class="dot"></div> Áudio recebido</div>
-        <div class="step-item done"><div class="dot"></div> Transcrição processada</div>
+        <div class="step-item done"><div class="dot"></div> Transcrição finalizada</div>
         <div class="step-item disabled"><div class="dot"></div> Envio ao Movidesk (Desabilitado)</div>
       </div>
 
       <div class="report-label">Solicitante</div>
       <div class="report-value" id="repSolicitante">-</div>
-
-      <div class="report-label">Transcrição por IA</div>
-      <div class="report-value quote" id="repTranscricao">-</div>
     </div>
 
     <div class="hint">Esta é uma Prova de Conceito (PoC). O áudio é processado em tempo real por Inteligência Artificial para demonstração da transcrição imediata.</div>
@@ -250,12 +287,14 @@
   const bars = document.getElementById('bars');
   const statusEl = document.getElementById('status');
   
+  const confirmBox = document.getElementById('confirmBox');
+  const btnDiscard = document.getElementById('btnDiscard');
+  const btnConfirmSend = document.getElementById('btnConfirmSend');
+
   const resultContainer = document.getElementById('resultContainer');
   const resultHeader = document.getElementById('resultHeader');
   const repSolicitante = document.getElementById('repSolicitante');
-  const repTranscricao = document.getElementById('repTranscricao');
 
-  // Ativa o botão apenas quando houver solicitante informado
   solicitante.addEventListener('input', () => {
     const hasValue = solicitante.value.trim() !== '';
     btn.disabled = !hasValue;
@@ -270,6 +309,7 @@
   let audioChunks = [];
   let stream = null;
   let mimeType = '';
+  let audioBlobSaved = null; // Guarda o blob na memória
 
   function pickMimeType() {
     const candidates = [
@@ -299,7 +339,6 @@
     }
   }
 
-  // Atualização dinâmica do loader/steps simulado
   function simulateProcessingSteps() {
     let step = 0;
     const interval = setInterval(() => {
@@ -321,18 +360,16 @@
     return interval;
   }
 
-  function showResult(ok, text, user) {
+  function showResult(ok, errorMsg, user) {
     resultContainer.classList.add('show');
     if (ok) {
       resultHeader.className = "result-header";
       resultHeader.innerHTML = "<span>✔</span> Processamento Concluído";
       repSolicitante.innerText = user || "Não identificado";
-      repTranscricao.innerText = `"${text}"`;
     } else {
       resultHeader.className = "result-header err";
       resultHeader.innerHTML = "<span>⚠️</span> Falha no Processamento";
-      repSolicitante.innerText = "-";
-      repTranscricao.innerText = text;
+      repSolicitante.innerText = errorMsg || "Erro ao processar";
     }
   }
 
@@ -343,11 +380,14 @@
     }
 
     resultContainer.classList.remove('show');
+    confirmBox.classList.remove('show');
+    audioBlobSaved = null;
+
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (err) {
       statusEl.innerText = 'Microfone não autorizado.';
-      showResult(false, 'A permissão de microfone é necessária para esta demonstração.', '');
+      showResult(false, 'A permissão de microfone é necessária.', '');
       return;
     }
 
@@ -362,11 +402,11 @@
     }
 
     mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
-    mediaRecorder.onstop = enviarAudio;
+    mediaRecorder.onstop = salvarAudioLocalmente;
     mediaRecorder.start();
 
     setUI('recording');
-    statusEl.innerText = '🎤 Gravando... solte para processar';
+    statusEl.innerText = '🎤 Gravando... solte para avaliar';
   }
 
   function pararGravacao() {
@@ -376,46 +416,67 @@
     if (stream) {
       stream.getTracks().forEach(t => t.stop());
     }
-    setUI('sending');
+    setUI('idle');
   }
 
-  function enviarAudio() {
+  // Apenas salva localmente e abre o modal de decisão
+  function salvarAudioLocalmente() {
     if (!audioChunks.length) {
-      setUI('idle');
       statusEl.innerText = 'Toque e segure para gravar';
       return;
     }
-    
+    audioBlobSaved = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
+    statusEl.innerText = 'Aguardando sua decisão...';
+    confirmBox.classList.add('show');
+  }
+
+  // Caso o usuário descarte o áudio
+  btnDiscard.addEventListener('click', () => {
+    audioBlobSaved = null;
+    audioChunks = [];
+    confirmBox.classList.remove('show');
+    statusEl.innerText = 'Toque e segure para gravar novamente';
+  });
+
+  // Se o usuário confirmar o envio
+  btnConfirmSend.addEventListener('click', () => {
+    if (!audioBlobSaved) return;
+    confirmBox.classList.remove('show');
+    enviarAudioServidor();
+  });
+
+  function enviarAudioServidor() {
+    setUI('sending');
     const processInterval = simulateProcessingSteps();
-    const blob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
     const ext = (mimeType || '').includes('mp4') ? 'm4a' : 'webm';
     const form = new FormData();
     const userVal = solicitante.value.trim();
+    
     form.append("solicitante", userVal);
-    form.append('audio', blob, 'chamado.' + ext);
+    form.append('audio', audioBlobSaved, 'chamado.' + ext);
 
     fetch(ENVIAR_URL, { method: 'POST', body: form })
       .then(res => res.json())
       .then(data => {
         clearInterval(processInterval);
         setUI('idle');
-        statusEl.innerText = 'Toque e segure para gravar novamente';
+        statusEl.innerText = 'Para um novo envio, grave novamente';
 
         if (data && data.success) {
-          showResult(true, data.transcricao, userVal);
+          showResult(true, '', userVal);
         } else {
-          showResult(false, data.error || 'Erro inesperado no servidor.', '');
+          showResult(false, data.error || 'Erro inesperado no processamento.', '');
         }
       })
       .catch(err => {
         clearInterval(processInterval);
         setUI('idle');
-        statusEl.innerText = 'Toque e segure para gravar';
-        showResult(false, 'Erro na comunicação com o servidor: ' + err.message, '');
+        statusEl.innerText = 'Falha no envio do áudio';
+        showResult(false, err.message, '');
       });
   }
 
-  // Eventos para Mobile e Desktop
+  // Eventos de Gravação
   btn.addEventListener('touchstart', (e) => { e.preventDefault(); iniciarGravacao(); }, { passive: false });
   btn.addEventListener('touchend',   (e) => { e.preventDefault(); pararGravacao(); }, { passive: false });
   btn.addEventListener('touchcancel',(e) => { e.preventDefault(); pararGravacao(); }, { passive: false });
